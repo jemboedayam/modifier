@@ -194,24 +194,18 @@ def modify_video(file_path, original_filename, progress_callback=None):
         if progress_callback:
             progress_callback(70, "Encoding video...")
         
-        # Mobile-optimized export settings
+        # FIXED: Minimal MoviePy export settings for maximum compatibility
         final_clip.write_videofile(
             output_path,
             codec="libx264",
             audio_codec="aac",
-            temp_audiofile=f"temp-audio-{int(time.time())}.m4a",
-            remove_temp=True,
-            preset="fast",      # Faster encoding for mobile
-            threads=4,          # Optimized thread count
-            bitrate="1800k",    # Good quality for mobile
-            audio_bitrate="128k",
-            # verbose=False,      # Reduce console output
-            logger=None         # Disable moviepy logging
+            preset="fast",
+            bitrate="1800k"
         )
         
         # Cleanup
-        clip.close()
         final_clip.close()
+        clip.close()
         
         if progress_callback:
             progress_callback(100, "Processing complete!")
@@ -278,8 +272,27 @@ def upload_file():
                 file.filename
             )
             
+            # IMPROVED: Better file cleanup handling
+            def safe_remove(filepath):
+                """Safely remove file with retry logic"""
+                max_attempts = 3
+                for attempt in range(max_attempts):
+                    try:
+                        if os.path.exists(filepath):
+                            os.remove(filepath)
+                            print(f"Successfully removed: {filepath}")
+                            return True
+                    except PermissionError:
+                        if attempt < max_attempts - 1:
+                            time.sleep(1)  # Wait before retry
+                            continue
+                        else:
+                            print(f"Could not remove {filepath} after {max_attempts} attempts")
+                            return False
+                return True
+            
             # Clean up uploaded file
-            os.remove(upload_path)
+            safe_remove(upload_path)
             
             # Prepare file for download
             def generate_file():
@@ -291,15 +304,10 @@ def upload_file():
                                 break
                             yield data
                 finally:
-                    # Schedule cleanup
+                    # Schedule cleanup with improved error handling
                     def cleanup():
-                        time.sleep(10)  # Wait 10 seconds
-                        try:
-                            if os.path.exists(processed_file_path):
-                                os.remove(processed_file_path)
-                                print(f"Cleaned up: {processed_file_path}")
-                        except Exception as e:
-                            print(f"Cleanup error: {e}")
+                        time.sleep(5)  # Reduced wait time
+                        safe_remove(processed_file_path)
                     
                     cleanup_thread = threading.Thread(target=cleanup)
                     cleanup_thread.daemon = True
@@ -323,8 +331,7 @@ def upload_file():
             
         except Exception as e:
             # Clean up on processing error
-            if os.path.exists(upload_path):
-                os.remove(upload_path)
+            safe_remove(upload_path)
             print(f"Processing error: {str(e)}")
             return jsonify({
                 'error': f'Video processing failed: {str(e)}',
@@ -373,7 +380,7 @@ def status():
     return jsonify({
         'status': 'running',
         'message': 'Mobile Phonk Video Processor Ready',
-        'version': '2.1.0-mobile-enhanced',
+        'version': '2.1.1-moviepy-fixed',
         'supported_formats': list(ALLOWED_EXTENSIONS),
         'mobile_optimized': True,
         'max_file_size_mb': MAX_CONTENT_LENGTH // (1024 * 1024),
@@ -387,7 +394,7 @@ def index():
     """API information endpoint"""
     return jsonify({
         'name': 'Mobile Phonk Video Processor API',
-        'version': '2.1.0-mobile-enhanced',
+        'version': '2.1.1-moviepy-fixed',
         'description': 'Transform videos with phonk-style effects optimized for mobile devices',
         'mobile_optimized': True,
         'endpoints': {
@@ -402,7 +409,8 @@ def index():
             'Progress tracking support',
             'Auto video compression',
             'Enhanced error handling',
-            'CORS enabled for web apps'
+            'CORS enabled for web apps',
+            'MoviePy compatibility fixed'
         ]
     })
 
@@ -431,6 +439,7 @@ if __name__ == '__main__':
     print(f"⏱️  Max duration: 5 minutes")
     print(f"🌐 Server URL: http://localhost:5000")
     print("✅ Mobile optimizations enabled")
+    print("✅ MoviePy compatibility fixed")
     print("🚀 Server ready!")
     
     # Run with mobile-optimized settings
