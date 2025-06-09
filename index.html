@@ -619,6 +619,8 @@
                 this.vibrate([50]); // Light feedback
             }
 
+
+            // Replace the hardcoded localhost URL in your uploadFile function
             async uploadFile() {
                 if (!this.selectedFile || this.isUploading) return;
 
@@ -646,7 +648,13 @@
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
 
-                    const response = await fetch('http://localhost:5000/upload', {
+                    // CHANGE THIS: Use your actual Vercel deployment URL
+                    // Replace 'your-app-name' with your actual Vercel app name
+                    const API_URL = window.location.hostname === 'localhost' 
+                        ? 'http://localhost:5000/upload'  // For local development
+                        : 'https://your-app-name.vercel.app/api/upload';  // For production
+
+                    const response = await fetch(API_URL, {
                         method: 'POST',
                         body: formData,
                         signal: controller.signal
