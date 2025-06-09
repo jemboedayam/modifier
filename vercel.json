@@ -1,4 +1,4 @@
-# vercel.json - Place this in your project root
+
 {
   "version": 2,
   "builds": [
@@ -20,9 +20,3 @@
   }
 }
 
-# requirements.txt - Place this in your project root
-Flask==2.3.3
-Flask-CORS==4.0.0
-moviepy==1.0.3
-numpy==1.24.3
-Werkzeug==2.3.7
