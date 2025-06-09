@@ -205,7 +205,7 @@ def modify_video(file_path, original_filename, progress_callback=None):
             threads=4,          # Optimized thread count
             bitrate="1800k",    # Good quality for mobile
             audio_bitrate="128k",
-            verbose=False,      # Reduce console output
+            # verbose=False,      # Reduce console output
             logger=None         # Disable moviepy logging
         )
         
